@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Controle Interno - Base</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter',sans-serif}
+body{background:#000;display:flex;justify-content:center;min-height:100vh;overflow-x:hidden}
+#loginScreen{position:fixed;inset:0;background:#000;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;transition:.5s}
+#loginScreen.hide{transform:translateY(-100%);opacity:0;pointer-events:none}
+.login-title{font-size:32px;font-weight:900;text-align:center;margin-bottom:6px}
+.login-title .white{color:#fff}
+.login-title .pink{color:#ff3b7f}
+.login-sub{font-size:12px;letter-spacing:3px;color:#3a3a3a;font-weight:700;margin-bottom:40px}
+.loginBox{width:100%;max-width:340px;background:#111;border-radius:28px;padding:28px 20px;border:1px solid #1c1c1c}
+.loginBox h3{font-size:16px;font-weight:700;color:#fff;text-align:center;margin-bottom:22px}
+.loginBox label{font-size:10px;letter-spacing:1.5px;color:#3a3a3a;font-weight:800;display:block;margin-bottom:10px}
+.loginBox input{width:100%;background:#1a1a1a;border:1px solid #262626;border-radius:16px;padding:14px 16px;color:#fff;font-size:14px;outline:none}
+.loginBox input.erro{border-color:#ff2a2a;animation:shake .35s}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.btnEntrar{width:100%;margin-top:18px;background:#ff3b7f;border:none;border-radius:16px;padding:15px;color:#fff;font-weight:800;font-size:14px;cursor:pointer}
+.panel{width:360px;background:#231a2a;border-radius:28px;padding:22px 18px;color:#fff;margin:20px 0}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.menu-btn{width:44px;height:44px;background:#2d2140;border-radius:14px;border:1px solid #3a2d4a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}
+.menu-btn span{width:18px;height:2.5px;background:#a89ab8;border-radius:10px;display:block}
+.panel h1{font-size:22px;font-weight:800;color:#fff;margin-bottom:4px}
+.panel .sub{font-size:12px;color:#9a8ca3;margin-bottom:22px}
+.status-row{display:flex;justify-content:space-between;text-align:center;margin-bottom:24px}
+.status-row small{font-size:9px;color:#7a6d84;display:block;margin-bottom:6px;font-weight:700}
+.status-row strong{font-size:13px;color:#fff}
+.status-row .online{color:#ff7abf !important}
+.section-title{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;font-size:11px;color:#b8a9c4;font-weight:800;padding-left:12px;position:relative}
+.section-title::before{content:'';width:3px;height:14px;background:#ff7abf;border-radius:10px;position:absolute;left:0;top:1px}
+.item{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #2f2440}
+.item-text h3{font-size:13px;color:#fff}
+.item-text p{font-size:11px;color:#7f708d;margin-top:3px}
+.toggle{width:44px;height:24px;background:#3a2d4a;border-radius:20px;position:relative;cursor:pointer}
+.toggle .dot{width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:.3s}
+.toggle.active{background:#ff7abf}
+.toggle.active .dot{left:23px}
+.proxy-box{background:#2d2140;border-radius:18px;padding:14px;margin-top:18px;display:flex;justify-content:space-between;gap:10px;border:1px solid transparent}
+.proxy-box.ativo{background:#3a2848;border-color:#ff7abf}
+.proxy-box.desativado{background:#2d2140;border-color:#3a2d4a}
+.badge{font-size:8px;padding:5px 8px;border-radius:20px}
+.badge.ativo{background:#ff7abf;color:#fff}
+.badge.desativado{background:#3a2d4a;color:#8b7d9b}
+.btn{width:100%;margin-top:16px;background:#ff7abf;border:none;border-radius:20px;padding:15px;color:#fff;font-weight:800;font-size:12px;cursor:pointer}
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);background:#1E1E28;border:1.5px solid #ff7abf;color:#fff;padding:14px 22px;border-radius:24px;font-size:13px;font-weight:700;opacity:0;transition:.4s;z-index:9999}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+#menuOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);opacity:0;pointer-events:none;transition:.3s;z-index:10}
+#menuOverlay.show{opacity:1;pointer-events:auto}
+#sideMenu{position:fixed;top:0;right:0;width:280px;height:100%;background:#1d1228;border-left:1px solid #3a2d4a;padding:22px 18px;transform:translateX(100%);transition:.35s;z-index:11;display:flex;flex-direction:column}
+#sideMenu.show{transform:translateX(0)}
+#sideMenu a{padding:14px 12px;border-radius:12px;color:#d9c6e8;text-decoration:none;font-size:13px;font-weight:600;display:flex;gap:10px;cursor:pointer}
+#sideMenu .close{position:absolute;top:18px;right:18px;background:#2d2140;border:none;width:34px;height:34px;border-radius:10px;color:#fff;cursor:pointer}
+#configModal,#protModal,#infoModal,#updateModal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;opacity:0;pointer-events:none;transition:.3s}
+#configModal.show,#protModal.show,#infoModal.show,#updateModal.show{opacity:1;pointer-events:auto}
+#configBackdrop,#protBackdrop,#infoBackdrop,#updateBackdrop{position:absolute;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px)}
+.configBox,.protBox,.infoBox,.updateBox{position:relative;width:330px;background:#231a2a;border:1px solid #3a2d4a;border-radius:24px;padding:22px 18px;transform:scale(.85);transition:.4s cubic-bezier(.34,1.56,.64,1)}
+#configModal.show .configBox,#protModal.show .protBox,#infoModal.show .infoBox,#updateModal.show .updateBox{transform:scale(1)}
+.configClose,.protClose,.infoClose{position:absolute;top:12px;right:12px;width:32px;height:32px;background:#2d2140;border:1px solid #3a2d4a;border-radius:10px;color:#fff;cursor:pointer}
+.protOption{background:#2d2140;border:1px solid #3a2d4a;border-radius:16px;padding:14px;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.protOption.ativo{border-color:#ff7abf;background:#3a2848}
+.protOption .left{display:flex;gap:10px;align-items:center}
+.protOption .left h4{font-size:12px;color:#fff}
+.protOption .left span{font-size:10px;color:#d9c6e8}
+.protToggle{width:42px;height:24px;background:#3a2d4a;border-radius:20px;position:relative;cursor:pointer}
+.protToggle .dot{width:18px;height:18px;background:#fff;border-radius:50%;position:absolute;top:3px;left:3px;transition:.3s}
+.protToggle.on{background:#ff7abf}
+.protToggle.on .dot{left:21px}
+.infoTitle{font-size:13px;font-weight:800;color:#ff7abf;text-align:center;margin-bottom:16px}
+.infoItem{background:#2d2140;border:1px solid #3a2d4a;border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;margin-bottom:10px}
+.infoItem .label{font-size:10px;color:#9a8ca3}
+.infoItem .value{font-size:12px;color:#fff;font-weight:800}
+.infoBadge{width:100%;background:linear-gradient(90deg,#ff7abf,#e98aff);border-radius:14px;padding:12px;text-align:center;margin-top:12px}
+.infoBadge p{font-size:10px;color:#fff;font-weight:800}
+.loader-ring{width:44px;height:44px;margin:0 auto 12px;border-radius:50%;border:3px solid #3a2d4a;border-top-color:#ff8ac6;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bar-bg{width:100%;height:6px;background:#3a2d4a;border-radius:10px;overflow:hidden}
+.bar-fill{height:100%;width:0%;background:linear-gradient(90deg,#ff7abf,#e98aff);transition:.15s}
+.percent{font-size:10px;color:#ff8ac6;margin-top:8px;display:block;font-weight:800}
+</style>
+</head>
+<body>
+
+<div id="loginScreen">
+  <div class="login-title"><span class="pink">PROXY</span> <span class="white">INTERNA</span></div>
+  <div class="login-sub">SISTEMA DE CONTROLE</div>
+  <div class="loginBox">
+    <h3>Acesse sua conta</h3>
+    <label>CHAVE DE ACESSO</label>
+    <input type="text" id="keyInput" placeholder="Digite sua chave">
+    <button class="btnEntrar" onclick="fazerLogin()">ENTRAR</button>
+  </div>
+</div>
+
+<div class="panel">
+  <div class="top-bar"><h1><span style="color:#ff3b7f">PROXY</span> <span style="color:#fff">INTERNA</span></h1><button class="menu-btn" onclick="abrirMenu()"><span></span><span></span><span></span></button></div>
+  <p class="sub">Ative as funções abaixo para obter o resultado desejado.</p>
+  <div class="status-row"><div><small>STATUS</small><strong class="online">Online</strong></div><div><small>VERSÃO</small><strong>v1.0</strong></div><div><small>DISPOSITIVO</small><strong>Android</strong></div></div>
+  <div class="section-title"><span>FUNÇÕES</span><span>REFINADO</span></div>
+  <div class="item" data-name="Função 1"><div class="item-text"><h3>BYPASS</h3><p>Bypass Ant ban</p></div><div class="toggle" onclick="selecionar(this)"><div class="dot"></div></div></div>
+  <div class="item" data-name="Função 2"><div class="item-text"><h3>HS Neck+📡</h3><p>HS no pescoço do personagem</p></div><div class="toggle" onclick="selecionar(this)"><div class="dot"></div></div></div>
+  <div class="item" data-name="Função 3"><div class="item-text"><h3>Função 3</h3><p>Descrição da função 3</p></div><div class="toggle" onclick="selecionar(this)"><div class="dot"></div></div></div>
+  <div class="item" data-name="Função 4"><div class="item-text"><h3>Função 4</h3><p>Descrição da função 4</p></div><div class="toggle" onclick="selecionar(this)"><div class="dot"></div></div></div>
+  <div class="item" data-name="Função 5"><div class="item-text"><h3>Função 5</h3><p>Descrição da função 5</p></div><div class="toggle" onclick="selecionar(this)"><div class="dot"></div></div></div>
+  <div class="item" data-name="Função 6"><div class="item-text"><h3>Função 6</h3><p>Descrição da função 6</p></div><div class="toggle" onclick="selecionar(this)"><div class="dot"></div></div></div>
+  <div class="proxy-box desativado" id="proxyBox"><div><h4 id="proxyTitle" style="color:#fff">Ativação Proxy</h4><p id="proxyText" style="font-size:11px;color:#9a8ca3">Proxy desligado e offline.</p></div><div class="badge desativado" id="proxyBadge">DESATIVADO</div></div>
+  <button class="btn" onclick="ativarPainel()">ATIVAR PAINEL</button>
+</div>
+
+<div id="menuOverlay" onclick="fecharMenu()"></div>
+<div id="sideMenu">
+  <button class="close" onclick="fecharMenu()">✕</button>
+  <h2 style="margin-top:10px;color:#fff">Menu</h2>
+  <a onclick="abrirConfig()">⚙️ Configurações</a>
+  <a onclick="abrirProtecao()">🛡️ Proteção</a>
+  <a onclick="abrirInfo()">ℹ️ Info</a>
+  <a onclick="iniciarAtualizacao()">🔄 Atualizar</a>
+  <a style="margin-top:auto;color:#ff7abf" onclick="fazerLogout()">🚪 Sair</a>
+</div>
+
+<div id="configModal"><div id="configBackdrop" onclick="fecharConfig()"></div><div class="configBox"><button class="configClose" onclick="fecharConfig()">✕</button><h2 style="font-size:14px;color:#fff;text-align:center;margin-bottom:20px">PARA O PAINEL FUNCIONAR<br>SIGA OS PASSOS ABAIXO</h2><div style="background:#2d2140;border-radius:16px;padding:14px;margin-bottom:12px"><p style="font-size:11px;color:#fff;text-align:center;margin-bottom:10px;font-weight:800">ESCREVA NO CANAL DO CRIADOR</p><a href="https://www.youtube.com/@DUARTE_XITER" target="_blank" style="display:flex;justify-content:center;background:#ff2a2a;padding:12px;border-radius:14px;color:#fff;text-decoration:none;font-weight:800">▶️ SE INSCREVER</a></div><div style="background:#2d2140;border-radius:16px;padding:14px"><p style="font-size:11px;color:#fff;text-align:center;margin-bottom:10px;font-weight:800">ENTRE NO GRUPO DE ATUALIZAÇÕES</p><a href="https://chat.whatsapp.com/DsoMZppoLCUCeNbYn4w5ps?s=cl&p=a&mlu=4" target="_blank" style="display:flex;justify-content:center;background:#25D366;padding:12px;border-radius:14px;color:#fff;text-decoration:none;font-weight:800">💬 ENTRAR</a></div></div></div>
+
+<div id="protModal"><div id="protBackdrop" onclick="fecharProtecao()"></div><div class="protBox"><button class="protClose" onclick="fecharProtecao()">✕</button><div style="display:flex;gap:10px;margin-bottom:18px;align-items:center"><div style="width:42px;height:42px;background:#2d2140;border-radius:12px;display:flex;align-items:center;justify-content:center">🛡️</div><div><h3 style="color:#fff;font-size:14px">Proteção Avançada</h3><p style="font-size:10px;color:#d9c6e8">Ative para maior segurança</p></div></div><div class="protOption" id="opt1"><div class="left"><div>🔒</div><div><h4>Anti-Ban 100%</h4><span>Proteção contra banimento</span></div></div><div class="protToggle" onclick="toggleProt(this,'opt1')"><div class="dot"></div></div></div><div class="protOption" id="opt2"><div class="left"><div>🌐</div><div><h4>Proxy Seguro</h4><span>IP oculto e criptografado</span></div></div><div class="protToggle" onclick="toggleProt(this,'opt2')"><div class="dot"></div></div></div><div class="protOption" id="opt3"><div class="left"><div>⚡</div><div><h4>Anti-Detecção</h4><span>Bypass de rastreadores</span></div></div><div class="protToggle" onclick="toggleProt(this,'opt3')"><div class="dot"></div></div></div></div></div>
+
+<div id="infoModal"><div id="infoBackdrop" onclick="fecharInfo()"></div><div class="infoBox"><button class="infoClose" onclick="fecharInfo()">✕</button><div class="infoTitle">INFORMAÇÕES DO PAINEL ABAIXO</div><div class="infoItem"><span class="label">CRIADOR</span><span class="value">DUARTE MODDER</span></div><div class="infoItem"><span class="label">DESENVOLVIDO POR</span><span class="value">DUARTEDEV OFC</span></div><div class="infoItem"><span class="label">VERSÃO</span><span class="value">v1.0 PREMIUM</span></div><div class="infoItem"><span class="label">VALIDADE</span><span class="value" style="color:#25D366">ILIMITED ♾️</span></div><div class="infoBadge"><p>✅ PAINEL VERIFICADO E ATIVO</p></div></div></div>
+
+<div id="updateModal"><div id="updateBackdrop"></div><div class="updateBox"><div class="loader-ring"></div><h3 id="updateTitle" style="color:#fff;font-size:14px;text-align:center">Atualizando...</h3><p id="updateSub" style="color:#d9c6e8;font-size:10px;text-align:center;margin-bottom:14px">Verificando nova versão...</p><div class="bar-bg"><div class="bar-fill" id="barFill"></div></div><span class="percent" id="percent">0%</span></div></div>
+
+<div id="toast"></div>
+
+<script>
+const CHAVE_CORRETA = "DUARTENEW";
+
+// EDITE SEUS 6 LINKS DIFERENTES AQUI:
+const LINKS = {
+  "Função 1": "https://www.mediafire.com/file/514ukpsh99z0n82/BYPASS.apk/file",
+  "Função 2": "https://www.mediafire.com/file/90oq15lu4vld6om/localconfig.json/file",
+  "Função 3": "https://www.mediafire.com/file/SEU_LINK_3/file",
+  "Função 4": "https://www.mediafire.com/file/SEU_LINK_4/file",
+  "Função 5": "https://www.mediafire.com/file/SEU_LINK_5/file",
+  "Função 6": "https://www.mediafire.com/file/SEU_LINK_6/file"
+};
+
+window.addEventListener('load', ()=>{
+  if(localStorage.getItem('painel_key')===CHAVE_CORRETA){
+    document.getElementById('loginScreen').classList.add('hide');
+  }
+});
+function fazerLogin(){
+  const v=document.getElementById('keyInput').value.trim().toUpperCase();
+  if(v===CHAVE_CORRETA){localStorage.setItem('painel_key',v);document.getElementById('loginScreen').classList.add('hide');mostrarToast('Acesso liberado');}
+  else{mostrarToast('Chave invalida');}
+}
+function fazerLogout(){localStorage.removeItem('painel_key');location.reload();}
+document.getElementById('keyInput').addEventListener('keydown', e=>{if(e.key==='Enter')fazerLogin()});
+
+let selecionada=null;
+function selecionar(el){
+  const item=el.closest('.item');
+  const nome=item.dataset.name;
+  item.animate([{transform:'scale(1)'},{transform:'scale(0.92)'},{transform:'scale(1)'}],{duration:220});
+  document.querySelectorAll('.toggle').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  selecionada=nome;
+  ligarProxy();
+  mostrarToast(nome+' - pronta');
+}
+function ativarPainel(){
+  if(!selecionada){mostrarToast('Selecione uma função');return;}
+  const btn=document.querySelector('.btn');
+  btn.animate([{transform:'scale(1)'},{transform:'scale(0.90)'},{transform:'scale(1.05)'},{transform:'scale(1)'}],{duration:350});
+  mostrarToast(selecionada+' ABRINDO LINK');
+  setTimeout(()=>{ window.open(LINKS[selecionada],'_blank'); },380);
+}
+function ligarProxy(){
+  const b=document.getElementById('proxyBox'),bd=document.getElementById('proxyBadge');
+  b.classList.add('ativo');b.classList.remove('desativado');bd.classList.add('ativo');bd.textContent='ATIVADO';
+}
+function desligarProxy(){
+  const b=document.getElementById('proxyBox'),bd=document.getElementById('proxyBadge');
+  b.classList.remove('ativo');b.classList.add('desativado');bd.classList.remove('ativo');bd.textContent='DESATIVADO';
+}
+function mostrarToast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+function abrirMenu(){document.getElementById('sideMenu').classList.add('show');document.getElementById('menuOverlay').classList.add('show');}
+function fecharMenu(){document.getElementById('sideMenu').classList.remove('show');document.getElementById('menuOverlay').classList.remove('show');}
+function abrirConfig(){fecharMenu();setTimeout(()=>document.getElementById('configModal').classList.add('show'),200);}
+function fecharConfig(){document.getElementById('configModal').classList.remove('show');}
+function abrirProtecao(){fecharMenu();setTimeout(()=>document.getElementById('protModal').classList.add('show'),200);}
+function fecharProtecao(){document.getElementById('protModal').classList.remove('show');}
+function abrirInfo(){fecharMenu();setTimeout(()=>document.getElementById('infoModal').classList.add('show'),200);}
+function fecharInfo(){document.getElementById('infoModal').classList.remove('show');}
+function toggleProt(el,id){el.classList.toggle('on');document.getElementById(id).classList.toggle('ativo');}
+function iniciarAtualizacao(){location.reload();}
+</script>
+</body>
+</html>
